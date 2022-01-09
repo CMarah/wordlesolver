@@ -1,5 +1,6 @@
 const prompt    = require('prompt-sync')();
 const word_list = require('./word_list.js');
+const error_words = require('./error_words.js');
 
 const getStatus = (guess, secret_word) =>
   guess.split('').map((guess_letter, position) => {
@@ -23,69 +24,65 @@ const getStatus = (guess, secret_word) =>
   }).join('');
 
 const processResult = (result, guess, prev_filters) => {
-  const known = prev_filters.known.map((known_letter, pos) => {
+  /*const known = prev_filters.known.map((known_letter, pos) => {
     if (known_letter) return known_letter;
     if (result[pos] === 'g') return guess[pos];
     return '';
-  });
+  });*/
+  const letters_info = guess.split('').reduce((info, letter, position) => {
+    const li = { position, result: result[position] };
+    info[letter] = (info[letter] || []).concat(li);
+    return info;
+  }, {});
+  let known     = prev_filters.known;
   let found     = prev_filters.found;
-  let missing   = prev_filters.missing;
+  let counts    = prev_filters.counts;
   let incorrect = prev_filters.incorrect;
-  result.split('').forEach((letter_status, position) => {
-    const letter = guess[position];
-    if (letter_status === 'y') {
-      const new_num_found = guess.split('').filter(
-        (gletter, pos) => gletter === letter && result[pos] === 'y'
-      ).length;
-      const num_found = found.join('').split(letter).length - 1;
-      for (let i = 0; i < (new_num_found - num_found); ++i) {
-        found.push(letter);
-      }
-      incorrect[position].push(letter);
-    } else if (letter_status === 'b') {
-      if (!known.includes(letter)) {
-        missing.push(letter);
-      } else if (!found.includes(letter)) {
-        incorrect = incorrect.map((incorrect_at_pos, pos) => {
-          if (known[pos] === letter) return incorrect_at_pos;
-          return incorrect_at_pos.concat(letter);
-        });
-      } else {
-        incorrect[position].push(letter);
+  Object.entries(letters_info).forEach(([letter, infos]) => {
+    infos.filter(info => info.result === 'g').forEach(info => {
+      known[info.position] = letter;
+    });
+    const num_found = infos.filter(info => ['g','y'].includes(info.result)).length;
+    if (infos.some(info => info.result === 'b')) {
+      counts[letter] = num_found;
+    } else {
+      if (!found[letter] || found[letter] < num_found) {
+        found[letter] = num_found;
       }
     }
+    infos.filter(info => info.result === 'y').forEach(info => {
+      incorrect[info.position].push(letter);
+    });
   });
-  return { known, found, missing, incorrect };
+  return { known, found, counts, incorrect };
+};
+
+const initial_letter_counts = 'abcdefghijklmnopqrstuvwxyz'.split('').reduce(
+  (counts, letter) => ({ ...counts, [letter]: 0 }), {}
+);
+const getWordLetterCounts = word => word.split('').reduce((counts, letter) => ({
+  ...counts,
+  [letter]: counts[letter] + 1,
+}), initial_letter_counts);
+
+const isValidWord = (known, found, counts, incorrect) => word => {
+  if (known.some((letter, position) => letter && letter !== word[position])) return false;
+  if (incorrect.some(
+    (letters, position) => letters.some(letter => letter === word[position])
+  )) return false;
+  const word_letter_counts = getWordLetterCounts(word);
+  return Object.entries(word_letter_counts).every(([letter, count]) => {
+    if (counts[letter] !== undefined) {
+      return counts[letter] === count;
+    }
+    if (found[letter] !== undefined) {
+      return found[letter] <= count;
+    }
+    return true;
+  });
 };
 
 const getUniqueLetters = word => [...new Set(word.split(''))];
-
-const isValidWord = (known, found, missing, incorrect) => word => {
-  if (!known.every((letter, position) => !letter || letter === word[position])) return false;
-  if (!incorrect.every(
-    (letters, position) => !letters.some(letter => letter === word[position])
-  )) return false;
-  const found_and_missing = found.filter(letter => missing.includes(letter));
-  if (found_and_missing.some(letter => {
-    const times_found = found.join('').split(letter).length - 1;
-    const appearances_word = word.split(letter).length - 1;
-    return times_found !== appearances_word;
-  })) return false;
-  const filtered_found   = found.filter(letter => !found_and_missing.includes(letter));
-  const filtered_missing = missing.filter(letter => !found_and_missing.includes(letter));
-  if (!filtered_found.every(letter => word.includes(letter))) return false;
-  return filtered_missing.every(letter => {
-    if (!word.includes(letter)) return true;
-    const letter_positions_in_known = known.map(
-      (known_letter, pos) => letter === known_letter ? pos: null
-    ).filter(pos => pos !== null);
-    if (!letter_positions_in_known) return false;
-    return !word.split('').some((word_letter, pos) =>
-      word_letter === letter && !letter_positions_in_known.includes(pos)
-    );
-  });
-};
-
 const getLetterOccurrences = word_list => word_list.reduce((occurrences, word) => {
   getUniqueLetters(word).forEach(letter => {
     if (!occurrences[letter]) occurrences[letter] = {};
@@ -114,7 +111,9 @@ const getPositionalScore = (word, letter_occurrences, attempts, filters) => {
 const getScore = (word, letter_occurrences, attempts, filters) => {
   return word.split('').reduce((total_score, letter, position) => {
     if (attempts < 6 && filters.known.filter(x => x).includes(letter)) return total_score;
-    if (attempts === 2 && filters.found.includes(letter)) return total_score;
+    if (attempts <= 3) {
+      if (Object.keys(filters.found).includes(letter)) return total_score;
+    }
     if (!letter_occurrences[letter]) return total_score;
     const already_added = word.split('').slice(0, position).includes(letter);
     return [
@@ -125,14 +124,15 @@ const getScore = (word, letter_occurrences, attempts, filters) => {
 };
 
 const getValidWordList = (filters, word_list, attempts) => {
-  const { known, found, missing, incorrect } = filters;
-  return word_list.filter(isValidWord(known, found, missing, incorrect));
+  const { known, found, counts, incorrect } = filters;
+  return word_list.filter(isValidWord(known, found, counts, incorrect));
 };
 
 const getBestWord = (filters, word_list, attempts) => {
   const valid_word_list = getValidWordList(filters, word_list, attempts);
-  //console.log('v', valid_word_list, attempts);
+  if (DEBUG) console.log('v', valid_word_list, attempts);
   const letter_occurrences = getLetterOccurrences(valid_word_list);
+  if (DEBUG) console.log('L', letter_occurrences);
   const word_pool = attempts < 6 ? word_list : valid_word_list;
   const best_word = word_pool.reduce(
     ({ word, score, positional_score }, next_word) => {
@@ -159,26 +159,30 @@ const getNumberOfAttempts = word_to_guess => {
   console.log('W', word_to_guess);
   let filters = {
     known: ['','','','',''],
-    found: [],
-    missing: [],
+    found: {},
+    counts: {},
     incorrect: [[],[],[],[],[]],
   };
   let result = 'bbbbb';
   let attempts = 0;
   while (result !== 'ggggg') {
     attempts++;
+    if (attempts === 10) return;
     const best_word = getBestWord(filters, word_list, attempts);
-    //console.log('Trying:', best_word, word_to_guess);
     result = getStatus(best_word, word_to_guess);
-    //console.log('result:', result);
     filters = processResult(result, best_word, filters);
-    //console.log(filters);
-    //console.log('');
+    if (DEBUG) {
+      console.log('Trying:', best_word, word_to_guess);
+      console.log('result:', result);
+      console.log(filters);
+      console.log('');
+    }
   }
   return attempts;
 };
-//console.log(getNumberOfAttempts('babes'));
+const DEBUG = true;
+console.log(getNumberOfAttempts('balls'));
+//const num_failed = word_list.slice(0, 15000).filter(x => getNumberOfAttempts(x) > 6);
+//const num_failed = error_words.slice(0, 15000).filter(x => getNumberOfAttempts(x) > 6);
+//console.log(JSON.stringify(num_failed), num_failed.length);
 //Failed before: dadas, daddy, cully, wawas, animi
-
-const num_failed = word_list.slice(0, 15000).filter(x => getNumberOfAttempts(x) > 6);
-console.log(num_failed, num_failed.length);
