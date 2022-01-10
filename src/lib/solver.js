@@ -1,4 +1,3 @@
-const prompt    = require('prompt-sync')();
 const word_list = require('./word_list.js');
 const target_words = require('./target_words.js');
 
@@ -89,20 +88,6 @@ const getLetterOccurrences = word_list => word_list.reduce((occurrences, word) =
   return occurrences;
 }, {});
 
-const getPositionalScore = (word, letter_occurrences, attempts, filters) => {
-  return word.split('').reduce((total_score, letter, position) => {
-    if (attempts < 6 && (
-      filters.found.includes(letter) ||
-      filters.known.filter(x => x).includes(letter)
-    )) return total_score;
-    if (!letter_occurrences[letter]) return total_score;
-    const already_added = word.split('').slice(0, position).includes(letter);
-    return total_score +
-      (already_added ? 0 : letter_occurrences[letter].total) +
-      letter_occurrences[letter][position]/50;
-  }, 0);
-};
-
 const getScore = (word, letter_occurrences, attempts, filters) => {
   return word.split('').reduce((total_score, letter, position) => {
     if (attempts < 6 && filters.known.filter(x => x).includes(letter)) return total_score;
@@ -123,7 +108,7 @@ const getValidWordList = (filters, words, attempts) => {
   return words.filter(isValidWord(known, found, counts, incorrect));
 };
 
-const getBestWord = (filters, attempts) => {
+const getBestGuess = (filters, attempts) => {
   const valid_word_list = getValidWordList(filters, target_words, attempts);
   if (DEBUG) console.log('v', valid_word_list, attempts);
   const letter_occurrences = getLetterOccurrences(valid_word_list);
@@ -147,7 +132,7 @@ const getBestWord = (filters, attempts) => {
   return best_word.word;
 };
 
-const getNumberOfAttempts = word_to_guess => {
+/*const getNumberOfAttempts = word_to_guess => {
   console.log('W', word_to_guess);
   let filters = {
     known: ['','','','',''],
@@ -160,7 +145,7 @@ const getNumberOfAttempts = word_to_guess => {
   while (result !== 'ggggg') {
     attempts++;
     if (attempts === 10) return;
-    const best_word = getBestWord(filters, attempts);
+    const best_word = getBestGuess(filters, attempts);
     result = getStatus(best_word, word_to_guess);
     filters = processResult(result, best_word, filters);
     if (DEBUG) {
@@ -171,9 +156,13 @@ const getNumberOfAttempts = word_to_guess => {
     }
   }
   return attempts;
-};
-const DEBUG = true;
-console.log(getNumberOfAttempts('balls'));
-//const num_failed = error_words.slice(0, 15000).filter(x => getNumberOfAttempts(x) > 6);
+};*/
+const DEBUG = false;
+//console.log(getNumberOfAttempts('balls'));
 //const num_failed = target_words.filter(x => getNumberOfAttempts(x) > 6);
 //console.log(JSON.stringify(num_failed), num_failed.length, 'out of', target_words.length);
+
+export {
+  getBestGuess,
+  processResult,
+};
