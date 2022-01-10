@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/wordlesolver/static/css/main.e28c3d47.css",
-    "main.js": "/wordlesolver/static/js/main.55699954.js",
-    "static/js/787.52925e3a.chunk.js": "/wordlesolver/static/js/787.52925e3a.chunk.js",
-    "index.html": "/wordlesolver/index.html",
-    "main.e28c3d47.css.map": "/wordlesolver/static/css/main.e28c3d47.css.map",
-    "main.55699954.js.map": "/wordlesolver/static/js/main.55699954.js.map",
-    "787.52925e3a.chunk.js.map": "/wordlesolver/static/js/787.52925e3a.chunk.js.map"
+    "main.css": "/static/css/main.e28c3d47.css",
+    "main.js": "/static/js/main.4240b83a.js",
+    "static/js/787.52925e3a.chunk.js": "/static/js/787.52925e3a.chunk.js",
+    "index.html": "/index.html",
+    "main.e28c3d47.css.map": "/static/css/main.e28c3d47.css.map",
+    "main.4240b83a.js.map": "/static/js/main.4240b83a.js.map",
+    "787.52925e3a.chunk.js.map": "/static/js/787.52925e3a.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e28c3d47.css",
-    "static/js/main.55699954.js"
+    "static/js/main.4240b83a.js"
   ]
 }
