@@ -3,3 +3,4 @@ package-lock.json
 *.swo
 node_modules/
 build/
+dist/
