@@ -1,27 +1,6 @@
 const word_list = require('./word_list.js');
 const target_words = require('./target_words.js');
 
-const getStatus = (guess, secret_word) =>
-  guess.split('').map((guess_letter, position) => {
-    if (!secret_word.includes(guess_letter)) return 'b';
-    if (guess_letter === secret_word[position]) return 'g';
-    const correct_positions_not_guessed = secret_word.split('').map((letter, index) => {
-      if (letter === guess[index]) return null;
-      if (letter !== guess_letter) return null;
-      return index;
-    }).filter(index => index !== null);
-    const guess_positions_not_correct = guess.split('').map((letter, index) => {
-      if (letter !== guess_letter) return null;
-      if (letter === secret_word[index]) return null;
-      return index;
-    }).filter(index => index !== null);
-    if (guess_positions_not_correct.length <= correct_positions_not_guessed.length) {
-      return 'y';
-    }
-    const guess_letter_number = guess_positions_not_correct.indexOf(position);
-    return (guess_letter_number + 1) <= correct_positions_not_guessed.length ? 'y' : 'b';
-  }).join('');
-
 const processResult = (result, guess, prev_filters) => {
   const letters_info = guess.split('').reduce((info, letter, position) => {
     const li = { position, result: result[position] };
@@ -110,9 +89,7 @@ const getValidWordList = (filters, words, attempts) => {
 
 const getBestGuess = (filters, attempts) => {
   const valid_word_list = getValidWordList(filters, target_words, attempts);
-  if (DEBUG) console.log('v', valid_word_list, attempts);
   const letter_occurrences = getLetterOccurrences(valid_word_list);
-  if (DEBUG) console.log('L', letter_occurrences);
   const word_pool = attempts < 6 ? word_list : valid_word_list;
   const best_word = word_pool.reduce(
     ({ word, score, positional_score }, next_word) => {
@@ -131,36 +108,6 @@ const getBestGuess = (filters, attempts) => {
   { score: 0, word: valid_word_list[0], positional_score: 0 });
   return best_word.word;
 };
-
-/*const getNumberOfAttempts = word_to_guess => {
-  console.log('W', word_to_guess);
-  let filters = {
-    known: ['','','','',''],
-    found: {},
-    counts: {},
-    incorrect: [[],[],[],[],[]],
-  };
-  let result = 'bbbbb';
-  let attempts = 0;
-  while (result !== 'ggggg') {
-    attempts++;
-    if (attempts === 10) return;
-    const best_word = getBestGuess(filters, attempts);
-    result = getStatus(best_word, word_to_guess);
-    filters = processResult(result, best_word, filters);
-    if (DEBUG) {
-      console.log('Trying:', best_word, word_to_guess);
-      console.log('result:', result);
-      console.log(filters);
-      console.log('');
-    }
-  }
-  return attempts;
-};*/
-const DEBUG = false;
-//console.log(getNumberOfAttempts('balls'));
-//const num_failed = target_words.filter(x => getNumberOfAttempts(x) > 6);
-//console.log(JSON.stringify(num_failed), num_failed.length, 'out of', target_words.length);
 
 export {
   getBestGuess,
