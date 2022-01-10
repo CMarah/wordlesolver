@@ -1,6 +1,6 @@
 {
   "name": "wordle_solver",
-  "homepage": "https://cmarah.github.io/wordlesolver",
+  "homepage": "https://wordle-solver.marah.dev",
   "version": "0.9.0",
   "private": true,
   "dependencies": {
