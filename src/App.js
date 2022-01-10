@@ -81,6 +81,13 @@ const App = () => {
           }}
         >NEXT</button>}
       </main>
+      <div className="flex flex-row mx-auto max-w-screen-sm border-t py-2">
+        Made by Marah <a href="https://github.com/CMarah" target="_blank" rel="noreferrer">
+          <img src="/githubicon.png" alt="github"
+            style={{height: "1.5em", padding: "0em 1em", cursor: "pointer"}}
+          />
+        </a>
+      </div>
     </div>
   </div>);
 };
