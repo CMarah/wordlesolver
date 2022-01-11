@@ -44,8 +44,14 @@ const App = () => {
         </div>
       </header>
       <main className="container mx-auto my-auto max-w-xs">
-        Try using <span style={{fontWeight: 800}}>{guess}</span>, then click
-        each letter to input the result:
+        {guess && (<div>
+          Try entering <span style={{fontWeight: 800}}>{guess}</span> at&nbsp;
+          <a href="https://www.powerlanguage.co.uk/wordle/" target="_blank" rel="noreferrer"
+            className="no-underline hover:underline text-sky-500 font-semibold"
+          >Wordle</a>, then click each letter to input the result:
+        </div>)}
+        {guess === undefined && (<div>It seems something went wrong. Are you sure you input the results correctly?
+        </div>)}
         <div className="m-3">
           <div className="flex flex-col gap-1">
             {prev_guesses.map((prev_guess, i) => (<WordleWord
