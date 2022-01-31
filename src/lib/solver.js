@@ -1,7 +1,7 @@
 const word_list_en    = require('./word_list.js');
 const target_words_en = require('./target_words.js');
 const word_list_es    = require('./es_words.js');
-const target_words_es = require('./es_words.js');
+const target_words_es = require('./es_target_words.js');
 
 const processResult = (result, guess, prev_filters) => {
   const letters_info = guess.split('').reduce((info, letter, position) => {
