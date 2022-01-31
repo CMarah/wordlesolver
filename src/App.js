@@ -36,7 +36,7 @@ const text_strings = (locale, guess) => ({
 });
 
 const getLocale = url => {
-  const new_locale = url.split('/').at(-1);
+  const new_locale = url.split('?locale=').at(-1);
   if (['es', 'en'].includes(new_locale)) {
     return new_locale;
   }
@@ -72,10 +72,10 @@ const App = () => {
           </div>
         </div>
         <div style={{margin: '1em auto', display: 'flex', width: '7em'}}>
-          <a href="/en"><img src="/en.png" alt="github"
+          <a href="/?locale=en"><img src="/en.png" alt="github"
             style={{height: "1em", padding: "0em 1em", cursor: "pointer"}}
           /></a>
-          <a href="/es"><img src="/es.png" alt="github"
+          <a href="/?locale=es"><img src="/es.png" alt="github"
             style={{height: "1em", padding: "0em 1em", cursor: "pointer"}}
           /></a>
         </div>
