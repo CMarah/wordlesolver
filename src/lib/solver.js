@@ -1,5 +1,7 @@
-const word_list = require('./word_list.js');
-const target_words = require('./target_words.js');
+const word_list_en    = require('./word_list.js');
+const target_words_en = require('./target_words.js');
+const word_list_es    = require('./es_words.js');
+const target_words_es = require('./es_words.js');
 
 const processResult = (result, guess, prev_filters) => {
   const letters_info = guess.split('').reduce((info, letter, position) => {
@@ -82,15 +84,21 @@ const getScore = (word, letter_occurrences, attempts, filters) => {
   }, [0, 0]);
 };
 
-const getValidWordList = (filters, words, attempts) => {
+const getValidWordList = (filters, words) => {
   const { known, found, counts, incorrect } = filters;
   return words.filter(isValidWord(known, found, counts, incorrect));
 };
 
-const getBestGuess = (filters, attempts) => {
+const getWordPool = (valid_word_list, attempt, locale) => {
+  if (attempt === 6) return valid_word_list;
+  return locale === 'en' ? word_list_en : word_list_es;
+};
+
+const getBestGuess = (filters, attempts, locale) => {
+  const target_words = locale === 'en' ? target_words_en : target_words_es;
   const valid_word_list = getValidWordList(filters, target_words, attempts);
   const letter_occurrences = getLetterOccurrences(valid_word_list);
-  const word_pool = attempts < 6 ? word_list : valid_word_list;
+  const word_pool = getWordPool(valid_word_list, attempts, locale);
   const best_word = word_pool.reduce(
     ({ word, score, positional_score }, next_word) => {
       const [ normal_score, pos_score ] = getScore(

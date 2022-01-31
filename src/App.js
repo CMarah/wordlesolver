@@ -1,5 +1,5 @@
 import './style.css';
-import {
+import React, {
   useState,
   useEffect,
 }                 from 'react';
@@ -16,6 +16,33 @@ const initial_filter = {
   incorrect: [[],[],[],[],[]],
 };
 
+const text_strings = (locale, guess) => ({
+  'tutorial': locale === 'en' ?
+    (<div>
+      Try entering <span style={{fontWeight: 800}}>{guess}</span> at&nbsp;
+      <a href="https://www.powerlanguage.co.uk/wordle/" target="_blank" rel="noreferrer"
+        className="no-underline hover:underline text-sky-500 font-semibold"
+      >Wordle</a>, then click each letter to input the result:
+    </div>) :
+    (<div>
+      Prueba a usar <span style={{fontWeight: 800}}>{guess}</span> en&nbsp;
+      <a href="https://wordle.danielfrg.com/" target="_blank" rel="noreferrer"
+        className="no-underline hover:underline text-sky-500 font-semibold"
+      >Wordle</a> y luego pulsa cada letra para introducir el resultado:
+    </div>),
+  'error': locale === 'en' ?
+    (<div>It seems something went wrong. Are you sure you input the results correctly?</div>) :
+    (<div>Parece que ha habido un error. ¿Seguro que has introducido los resultados correctamente?</div>),
+});
+
+const getLocale = url => {
+  const new_locale = url.split('/').at(-1);
+  if (['es', 'en'].includes(new_locale)) {
+    return new_locale;
+  }
+  return 'en';
+};
+
 const App = () => {
   const [ attempt, setAttempt          ] = useState(1);
   const [ filter, setFilter            ] = useState(initial_filter);
@@ -24,11 +51,13 @@ const App = () => {
   const [ prev_guesses, setPrevGuessed ] = useState([]);
   const [ prev_results, setPrevResults ] = useState([]);
 
+  const locale = getLocale(window.location.href);
+
   useEffect(() => {
-    const next_guess = getBestGuess(filter, attempt);
+    const next_guess = getBestGuess(filter, attempt, locale);
     setGuess(next_guess);
     setResults(['b','b','b','b','b']);
-  }, [attempt, filter]);
+  }, [attempt, filter, locale]);
 
   const valid_results = results.filter(x => x).length === 5;
 
@@ -42,16 +71,18 @@ const App = () => {
             </h1>
           </div>
         </div>
+        <div style={{margin: '1em auto', display: 'flex', width: '7em'}}>
+          <a href="/en"><img src="/en.png" alt="github"
+            style={{height: "1em", padding: "0em 1em", cursor: "pointer"}}
+          /></a>
+          <a href="/es"><img src="/es.png" alt="github"
+            style={{height: "1em", padding: "0em 1em", cursor: "pointer"}}
+          /></a>
+        </div>
       </header>
       <main className="container mx-auto my-auto max-w-xs">
-        {guess && (<div>
-          Try entering <span style={{fontWeight: 800}}>{guess}</span> at&nbsp;
-          <a href="https://www.powerlanguage.co.uk/wordle/" target="_blank" rel="noreferrer"
-            className="no-underline hover:underline text-sky-500 font-semibold"
-          >Wordle</a>, then click each letter to input the result:
-        </div>)}
-        {guess === undefined && (<div>It seems something went wrong. Are you sure you input the results correctly?
-        </div>)}
+        {guess && text_strings(locale, guess)['tutorial']}
+        {guess === undefined && text_strings(locale)['error']}
         <div className="m-3">
           <div className="flex flex-col gap-1">
             {prev_guesses.map((prev_guess, i) => (<WordleWord
@@ -85,10 +116,11 @@ const App = () => {
               }
             }
           }}
-        >NEXT</button>}
+        >{locale === 'en' ? 'NEXT' : 'SIGUIENTE'}</button>}
       </main>
       <div className="flex flex-row mx-auto max-w-screen-sm border-t py-2">
-        Made by Marah <a href="https://github.com/CMarah" target="_blank" rel="noreferrer">
+        {locale === 'en' ? 'Made by Marah' : 'Hecho por Marah'}
+        <a href="https://github.com/CMarah" target="_blank" rel="noreferrer">
           <img src="/githubicon.png" alt="github"
             style={{height: "1.5em", padding: "0em 1em", cursor: "pointer"}}
           />
