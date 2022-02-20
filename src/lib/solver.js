@@ -97,6 +97,7 @@ const getWordPool = (valid_word_list, attempt, locale) => {
 const getBestGuess = (filters, attempts, locale) => {
   const target_words = locale === 'en' ? target_words_en : target_words_es;
   const valid_word_list = getValidWordList(filters, target_words, attempts);
+  if (valid_word_list.length === 1) return valid_word_list[0];
   const letter_occurrences = getLetterOccurrences(valid_word_list);
   const word_pool = getWordPool(valid_word_list, attempts, locale);
   const best_word = word_pool.reduce(
